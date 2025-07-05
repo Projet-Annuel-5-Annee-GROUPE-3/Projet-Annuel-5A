@@ -1,0 +1,56 @@
+---
+- hosts: all
+  become: true
+  tasks:
+    - name: Download and install Node Exporter
+      become: true
+      get_url:
+        url: "https://github.com/prometheus/node_exporter/releases/download/v1.2.2/node_exporter-1.2.2.linux-amd64.tar.gz"
+        dest: "/tmp/node_exporter.tar.gz"
+
+    - name: Extract Node Exporter
+      become: true
+      command: "tar -xvf /tmp/node_exporter.tar.gz -C /tmp/"
+
+    - name: Copy Node Exporter binary
+      become: true
+      command: "cp /tmp/node_exporter-1.2.2.linux-amd64/node_exporter /usr/local/bin/"
+
+
+    - name: Create node_exporter group
+      group:
+        name: node_exporter
+
+    - name: Create node_exporter user
+      user:
+        name: node_exporter
+        group: node_exporter
+        shell: /bin/false
+
+
+
+
+    - name: Create Node Exporter service
+      become: true
+      copy:
+        content: |
+          [Unit]
+          Description=Node Exporter
+          After=network.target
+
+          [Service]
+          User=node_exporter
+          Group=node_exporter
+          Type=simple
+          ExecStart=/usr/local/bin/node_exporter
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: /etc/systemd/system/node_exporter.service
+
+    - name: Start Node Exporter service
+      become: true
+      systemd:
+        name: node_exporter
+        state: started
+        enabled: yes

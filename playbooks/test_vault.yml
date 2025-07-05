@@ -1,0 +1,12 @@
+---
+- name: Test de lecture du fichier Vault
+  hosts: localhost
+  gather_facts: false
+
+  vars_files:
+    - ../inventory/vault.yml
+
+  tasks:
+    - name: Afficher la clé Tailscale déchiffrée
+      debug:
+        msg: "La clé Tailscale est : {{ tailscale_authkey }}"

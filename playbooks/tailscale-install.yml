@@ -1,0 +1,28 @@
+---
+- name: Déployer Tailscale simplement
+  hosts: tailscale_targets
+  become: yes
+
+  vars_files:
+    - ../inventory/vault.yml
+
+  tasks:
+    - name: Installer curl (prérequis pour le script Tailscale)
+      apt:
+        name: curl
+        state: present
+        update_cache: yes
+
+    - name: Installer Tailscale via le script officiel
+      shell: curl -fsSL https://tailscale.com/install.sh | sh
+
+    - name: Lancer tailscale up avec la clé d’authentification
+      command: tailscale up --authkey={{ tailscale_authkey }}
+      environment:
+        PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+      register: tailscale_up
+      changed_when: "'Success' in tailscale_up.stdout or 'Logged in' in tailscale_up.stdout"
+
+    - name: Afficher le résultat de tailscale up
+      debug:
+        var: tailscale_up.stdout
