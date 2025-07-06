@@ -10,13 +10,13 @@ GadgetSphere est une entreprise innovante spécialisée dans la conception et la
 
 Dans le cadre de sa transformation numérique, GadgetSphere a pour objectif de : 
 
-Moderniser son système d'information (SI). 
+- Moderniser son système d'information (SI). 
 
-Externaliser plusieurs processus IT vers des solutions cloud et hybrides. 
+- Externaliser plusieurs processus IT vers des solutions cloud et hybrides. 
 
-Améliorer la résilience, la sécurité et la supervision de son infrastructure. 
+- Améliorer la résilience, la sécurité et la supervision de son infrastructure. 
 
-Intégrer des pratiques durables et évolutives dans son infrastructure IT. 
+- Intégrer des pratiques durables et évolutives dans son infrastructure IT. 
 
 ## 🏗️ Architecture du projet
 
