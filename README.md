@@ -20,9 +20,9 @@ Intégrer des pratiques durables et évolutives dans son infrastructure IT.
 
 ## 🏗️ Architecture du projet
 
-- `main.tf` : fichier principal de configuration Terraform  
-- `modules/` : répertoire contenant les modules réutilisables  
-- `scripts/` : scripts shell ou Python pour automatiser certaines tâches  
-- `docs/` : documentation et schémas d'architecture  
-- `conf/` : fichiers de configuration (ex : `backend`, `provider`, etc.)
-
+- `main.tf` : fichier principal 
+- `ansible/` : répertoire contenant les playbooks Ansible d'installation des agents (automatisation)
+- `powerhsell/` : scripts shell pour la supervision de l'Active Directory
+- `cluster-kubernetes-azure/` : code Terraform de l'installation d'un cluser Kubernetes sur Azure avec un seul node  
+- `Terraform-Kube-argoCD/` : code Terraform de l'installation d'un cluser Kubernetes (EKS) sur AWS avec 3 nodes et hébérgement d'un site web
+- `supervision` : scripts et codes pour la mise en place de la supervision (Prometheus, RocketChat...)
