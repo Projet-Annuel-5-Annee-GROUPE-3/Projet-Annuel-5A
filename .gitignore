@@ -9,7 +9,7 @@ ansible/.secrets/
 
 # === Grafana ===
 #grafana/dashboards/
-grafana/datasources/
+#grafana/datasources/
 
 # === Prometheus ===
 prometheus/data/
