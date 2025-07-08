@@ -37,24 +37,24 @@
     dest: /etc/grafana/provisioning/datasources/prometheus.yaml
     mode: '0644'
 
-- name: Provision dashboard loader
-  copy:
-    src: files/provisioning/dashboards/default.yaml
-    dest: /etc/grafana/provisioning/dashboards/default.yaml
-    mode: '0644'
+#- name: Provision dashboard loader
+#  copy:
+#    src: files/provisioning/dashboards/default.yaml
+#    dest: /etc/grafana/provisioning/dashboards/default.yaml
+#    mode: '0644'
 
-- name: Provision Grafana PVE Systeme dashboard
-  copy:
-    src: files/provisioning/dashboards/pve_node_exporter_dashboard.json
-    dest: /etc/grafana/provisioning/dashboards/pve_node_exporter_dashboard.json
-    mode: '0644'
+#- name: Provision Grafana PVE Systeme dashboard
+#  copy:
+#    src: files/provisioning/dashboards/pve_node_exporter_dashboard.json
+#    dest: /etc/grafana/provisioning/dashboards/pve_node_exporter_dashboard.json
+#    mode: '0644'
 
-- name: Provision Grafana network dashboard
-  copy:
-    src: files/provisioning/dashboards/pve_network_dashboard.json
-    dest: /etc/grafana/provisioning/dashboards/pve_network_dashboard.json
-    mode: '0644'
-  tags: grafana
+#- name: Provision Grafana network dashboard
+#  copy:
+#    src: files/provisioning/dashboards/pve_network_dashboard.json
+#    dest: /etc/grafana/provisioning/dashboards/pve_network_dashboard.json
+#    mode: '0644'
+#  tags: grafana
 
 #- name: Provision Grafana PfSense dashboard
 #  copy:
