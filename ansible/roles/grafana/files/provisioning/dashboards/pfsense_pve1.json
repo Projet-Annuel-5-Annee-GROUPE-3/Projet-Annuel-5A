@@ -1,0 +1,116 @@
+{
+  "id": null,
+  "uid": "pfsense-node-exporter-advanced",
+  "title": "PfSense Dashboard",
+  "tags": [
+    "pfsense",
+    "node_exporter",
+    "filtered"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 36,
+  "version": 1,
+  "refresh": "30s",
+  "templating": {
+    "list": [
+      {
+        "name": "pve",
+        "type": "query",
+        "datasource": "Prometheus",
+        "refresh": 1,
+        "query": "label_values(node_exporter_build_info, pve)",
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        }
+      },
+      {
+        "name": "pf",
+        "type": "query",
+        "datasource": "Prometheus",
+        "refresh": 1,
+        "query": "label_values(node_exporter_build_info, pf)",
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "CPU Usage (%)",
+      "targets": [
+        {
+          "expr": "(1 - avg(rate(node_cpu_seconds_total{mode=\"idle\", pve=~\"$pve\", pf=~\"$pf\"}[5m]))) * 100",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Memory Usage (%)",
+      "targets": [
+        {
+          "expr": "(node_memory_MemTotal_bytes{pve=~\"$pve\", pf=~\"$pf\"} - node_memory_MemAvailable_bytes{pve=~\"$pve\", pf=~\"$pf\"}) / node_memory_MemTotal_bytes{pve=~\"$pve\", pf=~\"$pf\"} * 100",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Network Traffic (Receive)",
+      "targets": [
+        {
+          "expr": "rate(node_network_receive_bytes_total{device!~\"lo\", pve=~\"$pve\", pf=~\"$pf\"}[1m])",
+          "legendFormat": "{{instance}} - {{device}}"
+        }
+      ],
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Network Traffic (Transmit)",
+      "targets": [
+        {
+          "expr": "rate(node_network_transmit_bytes_total{device!~\"lo\", pve=~\"$pve\", pf=~\"$pf\"}[1m])",
+          "legendFormat": "{{instance}} - {{device}}"
+        }
+      ],
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      }
+    }
+  ]
+}
