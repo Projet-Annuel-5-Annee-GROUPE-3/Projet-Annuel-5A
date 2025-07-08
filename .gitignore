@@ -12,8 +12,8 @@ ansible/.secrets/
 #grafana/datasources/
 
 # === Prometheus ===
-prometheus/data/
-prometheus/alerts.yml
+#prometheus/data/
+#prometheus/alerts.yml
 
 # === Exporters (si build ou binaires dedans) ===
 exporters/**/install.sh
