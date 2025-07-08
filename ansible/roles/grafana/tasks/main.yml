@@ -1,0 +1,77 @@
+- name: Download Grafana GPG key
+  ansible.builtin.get_url:
+    url: https://packages.grafana.com/gpg.key
+    dest: /usr/share/keyrings/grafana.key
+
+- name: Add Grafana APT repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main"
+    state: present
+    filename: grafana
+
+- name: Install Grafana
+  apt:
+    name: grafana
+    state: present
+
+- name: Enable and start Grafana
+  systemd:
+    name: grafana-server
+    enabled: yes
+    state: started
+
+- name: Create Grafana provisioning dirs
+  file:
+    path: "/etc/grafana/provisioning/{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - datasources
+    - dashboards
+
+- name: Provision Prometheus datasource
+  copy:
+    src: files/provisioning/datasources/prometheus.yaml
+    dest: /etc/grafana/provisioning/datasources/prometheus.yaml
+    mode: '0644'
+
+- name: Provision dashboard loader
+  copy:
+    src: files/provisioning/dashboards/default.yaml
+    dest: /etc/grafana/provisioning/dashboards/default.yaml
+    mode: '0644'
+
+- name: Provision Grafana PVE Systeme dashboard
+  copy:
+    src: files/provisioning/dashboards/pve_node_exporter_dashboard.json
+    dest: /etc/grafana/provisioning/dashboards/pve_node_exporter_dashboard.json
+    mode: '0644'
+
+- name: Provision Grafana network dashboard
+  copy:
+    src: files/provisioning/dashboards/pve_network_dashboard.json
+    dest: /etc/grafana/provisioning/dashboards/pve_network_dashboard.json
+    mode: '0644'
+  tags: grafana
+
+#- name: Provision Grafana PfSense dashboard
+#  copy:
+#    src: files/provisioning/dashboards/pfsense_pve1.json
+#    dest: /etc/grafana/provisioning/dashboards/pfsense_pve1.json
+#    mode: '0644'
+#  tags: grafana
+
+- name: Provision PVE Full
+  copy:
+    src: files/provisioning/dashboards/pve_full_provisioning.json
+    dest: /etc/grafana/provisioning/dashboards/pve_full_provisioning.json
+    mode: '0644'
+  tags: grafana
+
+- name: Restart Grafana to apply provisioning
+  systemd:
+    name: grafana-server
+    state: restarted
+    enabled: yes

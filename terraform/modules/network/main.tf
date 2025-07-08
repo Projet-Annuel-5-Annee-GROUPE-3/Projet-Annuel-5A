@@ -1,0 +1,76 @@
+resource "azurerm_virtual_network" "vnet" {
+  name                = "vnet-monitoring"
+  address_space       = ["10.0.0.0/16"]
+  location            = var.location
+  resource_group_name = var.resource_group_name
+}
+
+resource "azurerm_subnet" "subnet" {
+  name                 = "subnet-monitoring"
+  resource_group_name  = var.resource_group_name
+  virtual_network_name = azurerm_virtual_network.vnet.name
+  address_prefixes     = ["10.0.1.0/24"]
+}
+
+resource "azurerm_network_security_group" "nsg" {
+  name                = "nsg-monitoring"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+
+  security_rule {
+    name                       = "SSH"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    destination_port_range     = "22"
+#    source_address_prefix      = "94.228.190.38/32"
+    source_address_prefix      = "90.0.63.116/32"
+    destination_address_prefix = "*"
+    source_port_range          = "*"
+  }
+
+  security_rule {
+    name                       = "HTTP-Prometheus"
+    priority                   = 110
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    destination_port_range     = "9090"
+#    source_address_prefix      = "94.228.190.38/32"
+    source_address_prefix      = "90.0.63.116/32"
+    destination_address_prefix = "*"
+    source_port_range          = "*"
+  }
+
+  security_rule {
+    name                       = "HTTP-Grafana"
+    priority                   = 120
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    destination_port_range     = "3000"
+#    source_address_prefix      = "94.228.190.38/32"
+    source_address_prefix      = "90.0.63.116/32"
+    destination_address_prefix = "*"
+    source_port_range          = "*"
+  }
+}
+resource "azurerm_public_ip" "pip" {
+  name                = "pip-monitoring"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  allocation_method   = "Static"
+}
+
+output "subnet_id" {
+  value = azurerm_subnet.subnet.id
+}
+
+output "public_ip_id" {
+  value = azurerm_public_ip.pip.id
+}
+
+output "nsg_id" {
+  value = azurerm_network_security_group.nsg.id
+}

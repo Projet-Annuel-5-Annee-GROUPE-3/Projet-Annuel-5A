@@ -1,0 +1,51 @@
+# === Ansible ===
+ansible/*.retry
+ansible/*.log
+ansible/inventory.ini
+ansible/vault_pass.txt
+ansible/.secrets/
+*.yml~
+*.bak
+
+# === Grafana ===
+#grafana/dashboards/
+grafana/datasources/
+
+# === Prometheus ===
+prometheus/data/
+prometheus/alerts.yml
+
+# === Exporters (si build ou binaires dedans) ===
+exporters/**/install.sh
+exporters/**/install.ps1
+
+# === Terraform ===
+terraform/.terraform/
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/terraform.tfvars
+terraform/crash.log
+
+# === Systèmes / Éditeurs ===
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.swn
+*.idea/
+.vscode/
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.log
+
+# === Clés / Authentification potentielle ===
+*.pem
+*.key
+*.pub
+*.json
+*.env
+*.secret
+*.cred
+*.token
