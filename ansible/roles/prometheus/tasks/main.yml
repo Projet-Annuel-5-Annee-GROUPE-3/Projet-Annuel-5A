@@ -60,13 +60,13 @@
             - target_label: __address__
               replacement: 127.0.0.1:9221
 
-        - job_name: 'pve_nodes'
-          static_configs:
-            - targets:
-                - 62.210.245.189:9100
-                - 62.210.204.67:9100
-                - 195.154.167.4:9100
-                - 62.210.246.144:9100
+#        - job_name: 'pve_nodes'
+#          static_configs:
+#            - targets:
+#                - 62.210.245.189:9100
+#                - 62.210.204.67:9100
+#                - 195.154.167.4:9100
+#                - 62.210.246.144:9100
 
 - name: Create Prometheus systemd service
   copy:
