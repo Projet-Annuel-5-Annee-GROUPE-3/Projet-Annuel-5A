@@ -4,6 +4,7 @@ ansible/*.log
 ansible/inventory.ini
 ansible/vault_pass.txt
 ansible/.secrets/
+ansible/group_vars/all/vault.yml
 *.yml~
 *.bak
 

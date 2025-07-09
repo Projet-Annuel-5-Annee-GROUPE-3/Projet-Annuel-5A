@@ -1,5 +1,5 @@
 
-- name: Add Prometheus user
+- name: Ajout Prometheus user
   user:
     name: prometheus
     shell: /sbin/nologin
@@ -9,13 +9,14 @@
     url: https://github.com/prometheus/prometheus/releases/download/v2.52.0/prometheus-2.52.0.linux-amd64.tar.gz
     dest: /tmp/prometheus.tar.gz
 
-- name: Extract Prometheus
+- name: Extraction Prometheus
   unarchive:
     src: /tmp/prometheus.tar.gz
     dest: /opt/
     remote_src: yes
 
-- name: Install Prometheus binaries and config
+- name: Installation de Prometheus et configuration des binaires
+  become: true
   shell: |
     mv /opt/prometheus-*/prometheus /usr/local/bin/
     mv /opt/prometheus-*/promtool /usr/local/bin/
@@ -23,12 +24,24 @@
     cp -r /opt/prometheus-*/consoles /etc/prometheus/
     cp -r /opt/prometheus-*/console_libraries /etc/prometheus/
     chown -R prometheus:prometheus /etc/prometheus /var/lib/prometheus
-    sudo apt update
-    sudo apt install pipx
-    pipx ensurepath #Modifie le chemin d'installation de PVE Exporter, se base sur le PATH dans le env
+    apt update
+    apt install pipx
+
+- name: Configuration pipx
+    #Modifie le chemin d'installation de PVE Exporter, se base sur le PATH dans le env
+  shell: |
+    pipx ensurepath
     pipx install prometheus-pve-exporter
 
-- name: Add Prometheus config
+- name: Déploiement fichier PVE.yml
+  template:
+    src: pve.yml
+    dest: /etc/prometheus/pve.yml
+    owner: azureuser
+    group: azureuser
+    mode: '0600'
+
+- name: Ajout Prometheus config
   copy:
     dest: /etc/prometheus/prometheus.yml
     content: |
@@ -68,7 +81,7 @@
 #                - 195.154.167.4:9100
 #                - 62.210.246.144:9100
 
-- name: Create Prometheus systemd service
+- name: Création service pour Prometheus
   copy:
     dest: /etc/systemd/system/prometheus.service
     content: |
@@ -88,7 +101,7 @@
       WantedBy=multi-user.target
 
 
-- name: Create systemd service for prometheus-pve-exporter
+- name: Création service pour pve-exporter
   copy:
     dest: /etc/systemd/system/pve-exporter.service
     content: |
@@ -108,7 +121,7 @@
   become: yes
 
 
-- name: Enable and start pve-exporter
+- name: Enable et start de pve-exporter
   systemd:
     name: pve-exporter
     daemon_reload: yes
@@ -116,7 +129,7 @@
     state: started
   become: yes
 
-- name: Enable and start Prometheus
+- name: Enable et start Prometheus
   systemd:
     name: prometheus
     daemon_reload: yes

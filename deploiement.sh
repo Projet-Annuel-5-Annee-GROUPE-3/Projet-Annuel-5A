@@ -23,4 +23,4 @@ EOF
 # 4. Lancer Ansible
 echo "🚀 Lancement du playbook Ansible..."
 cd ansible
-ansible-playbook -i inventory.ini install-monitoring.yml -v
+ansible-playbook -i inventory.ini install-monitoring.yml --ask-vault-pass -v
