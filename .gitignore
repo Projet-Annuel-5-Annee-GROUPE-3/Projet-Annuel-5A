@@ -50,3 +50,4 @@ __pycache__/
 *.secret
 *.cred
 *.token
+terraform.tfstate
