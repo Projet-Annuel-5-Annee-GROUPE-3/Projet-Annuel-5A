@@ -25,7 +25,8 @@ terraform/terraform.tfstate
 terraform/terraform.tfstate.backup
 terraform/terraform.tfvars
 terraform/crash.log
-
+*.tfstate
+*.tfstate.*
 # === Systèmes / Éditeurs ===
 .DS_Store
 Thumbs.db
