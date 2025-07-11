@@ -37,11 +37,11 @@
     dest: /etc/grafana/provisioning/datasources/prometheus.yaml
     mode: '0644'
 
-#- name: Provision dashboard loader
-#  copy:
-#    src: files/provisioning/dashboards/default.yaml
-#    dest: /etc/grafana/provisioning/dashboards/default.yaml
-#    mode: '0644'
+- name: Provision dashboard loader
+  copy:
+    src: files/provisioning/dashboards/default.yaml
+    dest: /etc/grafana/provisioning/dashboards/default.yaml
+    mode: '0644'
 
 #- name: Provision Grafana PVE Systeme dashboard
 #  copy:

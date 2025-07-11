@@ -14,3 +14,8 @@ variable "subscription_id" {
   type        = string
   sensitive   = true
 }
+variable "public_ssh_key_path" {
+  description = "Path to your public SSH key"
+  type        = string
+  default     = "~/.ssh/id_rsa_azure.pub"
+}

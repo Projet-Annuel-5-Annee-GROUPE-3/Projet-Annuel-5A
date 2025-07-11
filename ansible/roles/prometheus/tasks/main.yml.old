@@ -1,3 +1,4 @@
+
 - name: Ajout Prometheus user
   user:
     name: prometheus
@@ -14,55 +15,20 @@
     dest: /opt/
     remote_src: yes
 
-- name: Déplacement des binaires Prometheus
+- name: Installation de Prometheus et configuration des binaires
   become: true
   shell: |
     mv /opt/prometheus-*/prometheus /usr/local/bin/
     mv /opt/prometheus-*/promtool /usr/local/bin/
-  args:
-    creates: /usr/local/bin/prometheus
-
-- name: Création des dossiers Prometheus
-  become: true
-  file:
-    path: "{{ item }}"
-    state: directory
-    owner: prometheus
-    group: prometheus
-    mode: '0755'
-  loop:
-    - /etc/prometheus
-    - /var/lib/prometheus
-
-- name: Copie des consoles
-  become: true
-  shell: |
+    mkdir -p /etc/prometheus /var/lib/prometheus
     cp -r /opt/prometheus-*/consoles /etc/prometheus/
     cp -r /opt/prometheus-*/console_libraries /etc/prometheus/
-  args:
-    creates: /etc/prometheus/consoles
+    chown -R prometheus:prometheus /etc/prometheus /var/lib/prometheus
+    apt update
+    apt install pipx
 
-- name: Mise à jour des paquets
-  become: true
-  apt:
-    update_cache: yes
-
-- name: Installation de pipx
-  become: true
-  apt:
-    name: pipx
-    state: present
-- name: Who am i
-  become: true
-  shell: |
-    whoami
-- name: Who am i
-  become: false
-  shell: |
-    whoami
-
-- name: Configuration pipx et installation de pve-exporter
-  become: false
+- name: Configuration pipx
+    #Modifie le chemin d'installation de PVE Exporter, se base sur le PATH dans le env
   shell: |
     pipx ensurepath
     pipx install prometheus-pve-exporter
@@ -86,9 +52,11 @@
           static_configs:
             - targets: ['localhost:9090']
 
+
         - job_name: 'pve_exporter'
           static_configs:
             - targets: ['localhost:9221']
+
 
         - job_name: 'pve'
           static_configs:
@@ -127,6 +95,7 @@
       [Install]
       WantedBy=multi-user.target
 
+
 - name: Création service pour pve-exporter
   copy:
     dest: /etc/systemd/system/pve-exporter.service
@@ -145,6 +114,7 @@
       [Install]
       WantedBy=multi-user.target
   become: yes
+
 
 - name: Enable et start de pve-exporter
   systemd:
