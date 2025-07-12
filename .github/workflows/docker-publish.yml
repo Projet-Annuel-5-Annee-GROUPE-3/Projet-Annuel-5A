@@ -1,30 +1,54 @@
-name: Build and Push Docker Image
+name: Build and Push with Version Tag
 
 on:
   push:
     paths:
       - 'gadgetsphere-website/**'
-      - 'Dockerfile'
     branches:
       - webSiteDeploy
 
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Set Docker Tag version
+        id: set_tag
+        run: |
+          # Get latest tag from Docker Hub
+          TAGS=$(curl -s https://hub.docker.com/v2/repositories/elmaupa/gadgetsphere/tags/?page_size=100 | jq -r '.results[].name' | grep '^v[0-9]\+' | sort -Vr)
+          LAST_TAG=$(echo "$TAGS" | head -n 1)
+          if [ -z "$LAST_TAG" ]; then
+            NEW_TAG=v1
+          else
+            NUM=${LAST_TAG#v}
+            NEW_NUM=$((NUM + 1))
+            NEW_TAG=v${NEW_NUM}
+          fi
+          echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
 
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        push: true
-        tags: elmaupa/gadgetsphere:latest
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Docker image
+        run: |
+          docker build -t elmaupa/gadgetsphere:${{ env.NEW_TAG }} .
+          docker push elmaupa/gadgetsphere:${{ env.NEW_TAG }}
+
+      - name: Update deployment.yaml with new tag
+        run: |
+          sed -i "s|image: elmaupa/gadgetsphere:.*|image: elmaupa/gadgetsphere:${{ env.NEW_TAG }}|" deployment.yaml
+
+      - name: Commit and Push updated deployment
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add deployment.yaml
+          git commit -m "chore: update to ${{ env.NEW_TAG }}"
+          git push
