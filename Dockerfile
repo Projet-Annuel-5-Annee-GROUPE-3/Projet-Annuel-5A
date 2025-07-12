@@ -1,11 +1,10 @@
 # Utilise l'image officielle Nginx
 FROM nginx:alpine
 
-# Supprime la page d'accueil par défaut
+# Supprime la page par défaut
 RUN rm -rf /usr/share/nginx/html/*
 
-# Copie tes fichiers dans le dossier Nginx
-COPY . /usr/share/nginx/html
+# Copie tes fichiers HTML/CSS dans le dossier servi par Nginx
+COPY gadgetsphere-website/ /usr/share/nginx/html
 
-# Expose le port 80
 EXPOSE 80
