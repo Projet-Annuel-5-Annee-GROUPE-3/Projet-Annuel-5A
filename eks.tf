@@ -11,6 +11,7 @@ resource "aws_eks_cluster" "eks" {
     ]
     endpoint_private_access = true
     endpoint_public_access  = true
+    public_access_cidrs     = ["0.0.0.0/0"]
   }
 
   kubernetes_network_config {
@@ -31,5 +32,3 @@ data "aws_caller_identity" "current" {}
 data "aws_iam_role" "eks_cluster_role" {
   name = "AmazonEKSAutoClusterRole"
 }
-
-
