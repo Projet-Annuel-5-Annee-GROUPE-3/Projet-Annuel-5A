@@ -29,4 +29,3 @@ resource "aws_eks_node_group" "gadget_nodes" {
 data "aws_iam_role" "eks_node_role" {
   name = "node-group-ec2"
 }
-
