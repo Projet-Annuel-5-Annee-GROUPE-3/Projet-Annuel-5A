@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: elmaupa/gadgetsphere:v2
+          image: elmaupa/gadgetsphere:vX
           ports:
             - containerPort: 80
