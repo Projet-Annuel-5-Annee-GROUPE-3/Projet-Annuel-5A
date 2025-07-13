@@ -17,3 +17,8 @@ spec:
           image: elmaupa/gadgetsphere:v11
           ports:
             - containerPort: 80
+          resources:
+            requests:
+              cpu: "100m"
+            limits:
+              cpu: "250m"
