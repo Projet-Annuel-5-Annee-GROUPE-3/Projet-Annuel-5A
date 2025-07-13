@@ -9,7 +9,7 @@
 <body>
   <header>
     <h1>GadgetSphere</h1>
-    <p>Bienvenue sur la plateforme des passionnés de gadgets tech huit</p>
+    <p>Bienvenue sur la plateforme des passionnés de gadgets tech</p>
   </header>
 
   <main>
@@ -26,10 +26,26 @@
         <li>📦 Des projets open-source</li>
       </ul>
     </section>
+
+    <section class="haute-dispo">
+      <h2>Haute disponibilité</h2>
+      <p>Vous êtes actuellement servi par le pod : <strong id="hostname">en chargement...</strong></p>
+    </section>
   </main>
 
   <footer>
     <p>&copy; 2025 GadgetSphere. Tous droits réservés.</p>
   </footer>
+
+  <script>
+    fetch('/hostname')
+      .then(response => response.text())
+      .then(text => {
+        document.getElementById('hostname').textContent = text;
+      })
+      .catch(() => {
+        document.getElementById('hostname').textContent = 'Inconnu';
+      });
+  </script>
 </body>
 </html>
