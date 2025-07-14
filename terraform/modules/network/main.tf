@@ -66,35 +66,52 @@ resource "azurerm_network_security_group" "nsg" {
     destination_address_prefix = "VirtualNetwork"
   }
 }
+# Groupe de sécurité Rocketchat
+resource "azurerm_network_security_group" "nsg_rocketchat" {
+  name                = "nsg-rocketchat"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+
+  security_rule {
+    name                       = "Allow-SSH"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefix      = "90.0.63.116/32"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "Allow-Rocketchat-HTTP"
+    priority                   = 110
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "3000"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+}
 
 resource "azurerm_public_ip" "pip_prometheus" {
   name                = "pip-prometheus"
   location            = var.location
   resource_group_name = var.resource_group_name
   allocation_method   = "Static"
-
-#  lifecycle {
-#    prevent_destroy = true
-#  }
 }
 resource "azurerm_public_ip" "pip_rocketchat" {
   name                = "pip-rocketchat"
   location            = var.location
   resource_group_name = var.resource_group_name
   allocation_method   = "Static"
-
-#  lifecycle {
-#    prevent_destroy = true
-#  }
 }
 output "subnet_id" {
   value = azurerm_subnet.subnet.id
 }
-
-#output "public_ip_id" {
-#  value = azurerm_public_ip.pip.id
-#}
-
 output "nsg_id" {
   value = azurerm_network_security_group.nsg.id
 }

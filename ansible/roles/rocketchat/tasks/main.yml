@@ -1,0 +1,131 @@
+- name: Create rocketchat user
+  user:
+    name: rocketchat
+    system: yes
+    shell: /usr/sbin/nologin
+    create_home: no
+
+- name: Install dependencies
+  become: true
+  apt:
+    name:
+      - curl
+      - gnupg
+      - apt-transport-https
+      - ca-certificates
+    state: present
+    update_cache: true
+
+- name: Install build tools required for npm native modules
+  become: true
+  apt:
+    name:
+      - build-essential
+      - python3
+      - make
+      - gcc
+      - g++
+    state: present
+    update_cache: true
+
+- name: Add MongoDB key and repo
+  become: true
+  shell: |
+    curl -fsSL https://pgp.mongodb.com/server-6.0.asc | gpg --dearmor -o /usr/share/keyrings/mongodb-server-6.0.gpg
+    echo "deb [signed-by=/usr/share/keyrings/mongodb-server-6.0.gpg] https://repo.mongodb.org/apt/debian bullseye/mongodb-org/6.0 main" > /etc/apt/sources.list.d/mongodb-org-6.0.list
+  args:
+    creates: /etc/apt/sources.list.d/mongodb-org-6.0.list
+
+- name: Install MongoDB
+  become: true
+  apt:
+    name: mongodb-org
+    update_cache: true
+    state: present
+
+- name: Enable and start MongoDB
+  become: true
+  systemd:
+    name: mongod
+    enabled: true
+    state: started
+
+- name: Download Rocket.Chat
+  become: true
+  get_url:
+    url: https://releases.rocket.chat/latest/download
+    dest: /tmp/rocket.chat.tgz
+
+- name: Extract Rocket.Chat
+  become: true
+  unarchive:
+    src: /tmp/rocket.chat.tgz
+    dest: /opt
+    remote_src: yes
+
+- name: Move Rocket.Chat to /opt/Rocket.Chat
+  become: true
+  command: mv /opt/bundle /opt/Rocket.Chat
+  args:
+    creates: /opt/Rocket.Chat
+
+- name: Set ownership of Rocket.Chat files
+  become: true
+  file:
+    path: /opt/Rocket.Chat
+    state: directory
+    recurse: yes
+    owner: rocketchat
+    group: rocketchat
+
+- name: Install Node.js 18 (required)
+  become: true
+  shell: |
+    curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+    apt-get install -y nodejs
+  args:
+    creates: /usr/bin/node
+
+- name: Install Rocket.Chat dependencies
+  become: true
+  shell: |
+    cd /opt/Rocket.Chat/programs/server
+    npm install
+  args:
+    chdir: /opt/Rocket.Chat/programs/server
+
+- name: Create systemd service for Rocket.Chat
+  become: true
+  copy:
+    dest: /etc/systemd/system/rocketchat.service
+    content: |
+      [Unit]
+      Description=Rocket.Chat server
+      After=network.target mongod.target
+
+      [Service]
+      ExecStart=/usr/bin/node /opt/Rocket.Chat/main.js
+      User=rocketchat
+      Environment=MONGO_URL=mongodb://localhost:27017/rocketchat
+      Environment=ROOT_URL=http://localhost:3000
+      Environment=PORT=3000
+      Environment=ADMIN_USERNAME={{ rocketchat_admin_user }}
+      Environment=ADMIN_EMAIL={{ rocketchat_admin_email }}
+      Environment=ADMIN_NAME={{ rocketchat_admin_name }}
+      Environment=ADMIN_PASS={{ rocketchat_admin_password }}
+      Environment=OVERWRITE_SETTING_Show_Setup_Wizard=completed
+      Environment=OVERWRITE_SETTING_Accounts_RegistrationForm=Disabled
+      Environment=OVERWRITE_SETTING_Accounts_AllowUserRegistration=false
+#      Environment=INITIAL_USER=yes
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Enable and start Rocket.Chat
+  become: true
+  systemd:
+    name: rocketchat
+    daemon_reload: yes
+    enabled: yes
+    state: started

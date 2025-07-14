@@ -46,12 +46,6 @@ resource "azurerm_linux_virtual_machine" "vm" {
   }
 }
 
-#output "public_ip" {
-#  value = azurerm_network_interface.nic.ip_configuration[0].public_ip_address_id
-#}
-#output "prometheus_ip" {
-#  value = azurerm_public_ip.pip.ip_address
-#}
 output "prometheus_ip" {
   value = var.prometheus_ip
 }
@@ -72,10 +66,15 @@ resource "azurerm_network_interface" "rocketchat_nic" {
 }
 
 # Association NSG → NIC
+#resource "azurerm_network_interface_security_group_association" "rocketchat_nsg_assoc" {
+#  network_interface_id      = azurerm_network_interface.rocketchat_nic.id
+#  network_security_group_id = var.network_security_group_id
+#}
 resource "azurerm_network_interface_security_group_association" "rocketchat_nsg_assoc" {
   network_interface_id      = azurerm_network_interface.rocketchat_nic.id
-  network_security_group_id = var.network_security_group_id
+  network_security_group_id = var.rocketchat_nsg_id
 }
+
 
 # Machine Rocket.Chat
 resource "azurerm_linux_virtual_machine" "rocketchat" {
@@ -100,15 +99,12 @@ resource "azurerm_linux_virtual_machine" "rocketchat" {
 
   source_image_reference {
     publisher = "Debian"
-    offer     = "debian-12"
-    sku       = "12"
+    offer     = "debian-11"
+    sku       = "11-backports-gen2"
     version   = "latest"
   }
 }
 
-#output "rocketchat_ip" {
-#  value = azurerm_public_ip.pip.ip_address
-#}
 output "rocketchat_ip" {
   value = var.rocketchat_ip
 }

@@ -21,6 +21,8 @@ echo "📄 Génération de l'inventaire Ansible..."
 cat > ansible/inventory.ini <<EOF
 [monitoring]
 $PROMETHEUS_IP ansible_user=azureuser ansible_ssh_private_key_file=~/.ssh/id_rsa_azure
+[rocketchat]
+$ROCKETCHAT_IP ansible_user=azureuser ansible_ssh_private_key_file=~/.ssh/id_rsa_azure
 EOF
 
 # 4. Lancer Ansible

@@ -1,0 +1,78 @@
+- name: Create alertmanager user
+  user:
+    name: alertmanager
+    shell: /sbin/nologin
+    system: yes
+
+- name: Download Alertmanager
+  get_url:
+    url: https://github.com/prometheus/alertmanager/releases/download/v0.27.0/alertmanager-0.27.0.linux-amd64.tar.gz
+    dest: /tmp/alertmanager.tar.gz
+
+- name: Extract Alertmanager
+  unarchive:
+    src: /tmp/alertmanager.tar.gz
+    dest: /opt/
+    remote_src: yes
+
+- name: Move binaries
+  shell: |
+    mv /opt/alertmanager-*/alertmanager /usr/local/bin/
+    mv /opt/alertmanager-*/amtool /usr/local/bin/
+  args:
+    creates: /usr/local/bin/alertmanager
+
+- name: Create config and data dirs
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: alertmanager
+    group: alertmanager
+    mode: '0755'
+  loop:
+    - /etc/alertmanager
+    - /var/lib/alertmanager
+
+- name: Deploy alertmanager config
+  copy:
+    dest: /etc/alertmanager/alertmanager.yml
+    content: |
+      global:
+        resolve_timeout: 5m
+
+      route:
+        receiver: default
+        group_interval: 5m
+        repeat_interval: 1h
+
+      receivers:
+        - name: default
+          webhook_configs:
+            - url: 'http://localhost:9093/'
+    owner: alertmanager
+    group: alertmanager
+    mode: '0644'
+
+- name: Create systemd service for Alertmanager
+  copy:
+    dest: /etc/systemd/system/alertmanager.service
+    content: |
+      [Unit]
+      Description=Alertmanager
+      After=network.target
+
+      [Service]
+      User=alertmanager
+      ExecStart=/usr/local/bin/alertmanager \
+        --config.file=/etc/alertmanager/alertmanager.yml \
+        --storage.path=/var/lib/alertmanager
+
+      [Install]
+      WantedBy=multi-user.target
+  notify: Reload systemd
+
+- name: Enable and start Alertmanager
+  systemd:
+    name: alertmanager
+    enabled: yes
+    state: started

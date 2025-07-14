@@ -1,9 +1,14 @@
-
 ---
-- name: Install Prometheus and Grafana
-  hosts: all
-  become: true
 
+- name: Install Prometheus and Grafana
+  hosts: monitoring
+  become: true
   roles:
     - prometheus
     - grafana
+    - alertmanager
+- name: Install Rocket.Chat
+  hosts: rocketchat
+  become: true
+  roles:
+    - rocketchat

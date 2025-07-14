@@ -10,10 +10,6 @@ variable "subnet_id" {
   type = string
 }
 
-#variable "public_ip_address_id" {
-#  type = string
-#}
-
 variable "network_security_group_id" {
   type = string
 }
@@ -41,3 +37,7 @@ variable "rocketchat_ip" {
   description = "Public IP Rocket.Chat"
   type        = string
 }
+variable "rocketchat_nsg_id" {
+  type = string
+}
+
