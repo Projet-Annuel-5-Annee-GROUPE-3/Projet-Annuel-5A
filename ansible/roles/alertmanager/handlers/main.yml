@@ -2,3 +2,8 @@
 - name: Reload systemd
   become: true
   command: systemctl daemon-reexec
+
+- name: Restart Alertmanager
+  service:
+    name: alertmanager
+    state: restarted

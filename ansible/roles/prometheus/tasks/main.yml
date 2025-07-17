@@ -1,3 +1,12 @@
+- name: Check if prometheus is already installed
+  stat:
+    path: /opt/prometheus
+  register: prometheus_installed
+
+- name: Skip role prometheus if already installed
+  meta: end_play
+  when: prometheus_installed.stat.exists
+
 - name: Ajout Prometheus user
   user:
     name: prometheus
@@ -46,6 +55,7 @@
   become: true
   apt:
     update_cache: yes
+  ignore_errors: yes
 
 - name: Installation de pipx
   become: true
@@ -115,6 +125,8 @@
             - target_label: __address__
               replacement: 127.0.0.1:9221
 
+      rule_files:
+        - "rules/*.yml"
 - name: Création service pour Prometheus
   copy:
     dest: /etc/systemd/system/prometheus.service

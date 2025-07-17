@@ -1,0 +1,28 @@
+---
+- name: Create incoming webhook in Rocket.Chat
+  uri:
+    url: "https://{{ rocketchat_fqdn }}/api/v1/incoming-webhook"
+    method: POST
+    headers:
+      X-Auth-Token: "{{ prom_auth_token }}"
+      X-User-Id: "{{ prom_user_id }}"
+      Content-Type: application/json
+    body_format: json
+    body:
+      enabled: true
+      channel: "#supervision"
+      username: "prometheus_bot"
+      name: "Alertmanager Webhook"
+      alias: "Alertmanager"
+      emoji: ":rotating_light:"
+      scriptEnabled: false
+  register: webhook_response
+  changed_when: webhook_response.status == 200
+  failed_when: webhook_response.status not in [200, 409]  # 409 = already exists
+  delegate_to: localhost
+  run_once: true
+
+- name: Set webhook URL fact
+  set_fact:
+    alertmanager_webhook_url: "{{ webhook_response.json.webhook.url | default(alertmanager_webhook_url | default('')) }}"
+  when: webhook_response.json.webhook is defined

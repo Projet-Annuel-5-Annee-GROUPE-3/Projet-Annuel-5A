@@ -1,0 +1,13 @@
+groups:
+  - name: Proxmox Nodes
+    rules:
+      - alert: Proxmox Node Down
+        expr: |
+          min by (id) (pve_up{id=~"node/.*"}) == 0
+        for: 30s
+        labels:
+          severity: critical
+          alert_id: '{{ $labels.id }}'
+        annotations:
+          summary: "Le nœud {{ $labels.id }} ne répond plus"
+          description: "Le nœud Proxmox {{ $labels.id }} est probablement hors ligne."

@@ -3,12 +3,22 @@
 - name: Install Prometheus and Grafana
   hosts: monitoring
   become: true
+  vars:
+    domain: supervision.projetgrp3.ovh
+    target_port: 3000  # Grafana par défaut
   roles:
     - prometheus
     - grafana
     - alertmanager
+    - letsencrypt
+#    - alertmanager_rocketchat
+
 - name: Install Rocket.Chat
   hosts: rocketchat
   become: true
+  vars:
+    domain: rocketchat.projetgrp3.ovh
+    target_port: 3000  # Port de Rocket.Chat
   roles:
     - rocketchat
+    - letsencrypt

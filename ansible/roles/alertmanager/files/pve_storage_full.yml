@@ -1,0 +1,13 @@
+groups:
+  - name: Proxmox Storage
+    rules:
+      - alert: Proxmox Storage Presque Plein
+        expr: |
+          (pve_disk_usage_bytes{id=~"storage/.*"} / pve_disk_size_bytes{id=~"storage/.*"}) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          alert_id: '{{ $labels.id }}'
+        annotations:
+          summary: "Stockage {{ $labels.id }} est presque plein"
+          description: "Le stockage {{ $labels.id }} dépasse 85% d'utilisation."

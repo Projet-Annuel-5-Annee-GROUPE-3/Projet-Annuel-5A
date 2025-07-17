@@ -1,0 +1,171 @@
+---
+- name: Create prometheus bot user (idempotent)
+  uri:
+    url: "https://{{ rocketchat_fqdn }}/api/v1/users.create"
+    method: POST
+    headers:
+      X-Auth-Token: "{{ rocketchat_admin_token }}"
+      X-User-Id: "{{ rocketchat_admin_user_id }}"
+      Content-Type: application/json
+    body_format: json
+    body:
+      name: "Prometheus Bot"
+      username: "prometheus_bot"
+      email: "prometheus@grp3.ovh"
+      password: "{{ rocketchat_prometheus_password }}"
+  register: _create_prometheus
+  failed_when: _create_prometheus.status not in [200, 400]
+  changed_when: _create_prometheus.status == 200
+  delegate_to: localhost
+  run_once: true
+
+- name: Lookup prometheus_bot user info
+  uri:
+    url: "https://{{ rocketchat_fqdn }}/api/v1/users.info?username=prometheus_bot"
+    method: GET
+    headers:
+      X-Auth-Token: "{{ rocketchat_admin_token }}"
+      X-User-Id: "{{ rocketchat_admin_user_id }}"
+  register: _prom_user_info
+  delegate_to: localhost
+  run_once: true
+
+- name: Set prometheus user ID
+  set_fact:
+    prometheus_user_id: "{{ _prom_user_info.json.user._id }}"
+  run_once: true
+
+- name: Ensure supervision private group exists
+  uri:
+    url: "https://{{ rocketchat_fqdn }}/api/v1/groups.create"
+    method: POST
+    headers:
+      X-Auth-Token: "{{ rocketchat_admin_token }}"
+      X-User-Id: "{{ rocketchat_admin_user_id }}"
+      Content-Type: application/json
+    body_format: json
+    body:
+      name: "supervision"
+  register: _create_supervision
+  failed_when: _create_supervision.status not in [200, 400]
+  changed_when: _create_supervision.status == 200
+  delegate_to: localhost
+  run_once: true
+
+- name: Get supervision group info
+  uri:
+    url: "https://{{ rocketchat_fqdn }}/api/v1/groups.info?roomName=supervision"
+    method: GET
+    headers:
+      X-Auth-Token: "{{ rocketchat_admin_token }}"
+      X-User-Id: "{{ rocketchat_admin_user_id }}"
+  register: _supervision_info
+  delegate_to: localhost
+  run_once: true
+
+- name: Set supervision group ID from creation if available
+  set_fact:
+    supervision_group_id: "{{ _create_supervision.json.group._id }}"
+  when: _create_supervision is defined and _create_supervision.json is defined and _create_supervision.json.group is defined and _create_supervision.json.group._id is defined
+  run_once: true
+
+- name: Set supervision group ID from info if not already set
+  set_fact:
+    supervision_group_id: "{{ _supervision_info.json.group._id }}"
+  when: supervision_group_id is not defined and
+        _supervision_info is defined and
+        _supervision_info.json is defined and
+        _supervision_info.json.group is defined and
+        _supervision_info.json.group._id is defined
+  run_once: true
+
+- name: Invite prometheus_bot to supervision group
+  uri:
+    url: "https://{{ rocketchat_fqdn }}/api/v1/groups.invite"
+    method: POST
+    headers:
+      X-Auth-Token: "{{ rocketchat_admin_token }}"
+      X-User-Id: "{{ rocketchat_admin_user_id }}"
+      Content-Type: application/json
+    body_format: json
+    body:
+      roomId: "{{ supervision_group_id }}"
+      userId: "{{ prometheus_user_id }}"
+  register: _invite_prom
+  failed_when: _invite_prom.status not in [200, 400]
+  changed_when: _invite_prom.status == 200
+  delegate_to: localhost
+  run_once: true
+
+- name: Login as prometheus_bot to get auth token
+  uri:
+    url: "https://{{ rocketchat_fqdn }}/api/v1/login"
+    method: POST
+    headers:
+      Content-Type: application/json
+    body_format: json
+    body:
+      user: "prometheus_bot"
+      password: "{{ rocketchat_prometheus_password }}"
+  register: _prom_login
+  delegate_to: localhost
+  run_once: true
+
+- name: Set prometheus bot token and user ID
+  set_fact:
+    prom_auth_token: "{{ _prom_login.json.data.authToken }}"
+    prom_user_id: "{{ _prom_login.json.data.userId }}"
+  run_once: true
+
+#- name: Delete existing PAT if it exists
+#  uri:
+#    url: "https://{{ rocketchat_fqdn }}/api/v1/users.removePersonalAccessToken"
+#    method: POST
+#    headers:
+#      X-Auth-Token: "{{ prom_auth_token }}"
+#      X-User-Id: "{{ prom_user_id }}"
+#      Content-Type: application/json
+#    body_format: json
+#    body:
+#      tokenName: "{{ rocketchat_prometheus_pat_name }}"
+#  register: _remove_pat
+#  failed_when: >
+#    _remove_pat.status != 200 and
+#    (_remove_pat.json.error is not defined or _remove_pat.json.error != 'Token does not exist [error-token-does-not-exists]')
+#  changed_when: false
+#  delegate_to: localhost
+#  run_once: true
+
+- name: Generate new PAT for prometheus_bot
+  uri:
+    url: "https://{{ rocketchat_fqdn }}/api/v1/users.generatePersonalAccessToken"
+    method: POST
+    headers:
+      X-Auth-Token: "{{ prom_auth_token }}"
+      X-User-Id: "{{ prom_user_id }}"
+      Content-Type: application/json
+    body_format: json
+    body:
+      tokenName: "{{ rocketchat_prometheus_pat_name }}"
+  register: _prom_pat
+  delegate_to: localhost
+  run_once: true
+  failed_when: _prom_pat.status != 200
+  changed_when: _prom_pat.status == 200
+
+- name: Set prometheus_token from response
+  set_fact:
+    prometheus_token: "{{ _prom_pat.json.token }}"
+  delegate_to: localhost
+  run_once: true
+
+- name: Save Prometheus Rocket.Chat PAT to local file (vault perms!)
+  copy:
+    content: |
+      ROCKETCHAT_URL=https://{{ rocketchat_fqdn }}
+      ROCKETCHAT_USER_ID={{ prom_user_id }}
+      ROCKETCHAT_TOKEN={{ prometheus_token }}
+    dest: "./rocketchat_prometheus.env"
+    mode: '0600'
+  delegate_to: localhost
+  run_once: true

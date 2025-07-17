@@ -42,6 +42,29 @@ resource "azurerm_network_security_group" "nsg" {
   }
 
   security_rule {
+    name                       = "Allow-HTTP"
+    priority                   = 140
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    destination_port_range     = "80"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+    source_port_range          = "*"
+  }
+  security_rule {
+    name                       = "Allow-HTTPS"
+    priority                   = 150
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "443"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
     name                       = "HTTP-Grafana"
     priority                   = 120
     direction                  = "Inbound"
@@ -83,6 +106,29 @@ resource "azurerm_network_security_group" "nsg_rocketchat" {
     source_address_prefix      = "90.0.63.116/32"
     destination_address_prefix = "*"
   }
+  security_rule {
+    name                       = "Allow-HTTP"
+    priority                   = 140
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    destination_port_range     = "80"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+    source_port_range          = "*"
+  }
+
+  security_rule {
+    name                       = "Allow-HTTPS"
+    priority                   = 150
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "443"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
 
   security_rule {
     name                       = "Allow-Rocketchat-HTTP"
@@ -102,12 +148,20 @@ resource "azurerm_public_ip" "pip_prometheus" {
   location            = var.location
   resource_group_name = var.resource_group_name
   allocation_method   = "Static"
+  sku                 = "Standard"
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 resource "azurerm_public_ip" "pip_rocketchat" {
   name                = "pip-rocketchat"
   location            = var.location
   resource_group_name = var.resource_group_name
   allocation_method   = "Static"
+  sku                 = "Standard"
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 output "subnet_id" {
   value = azurerm_subnet.subnet.id

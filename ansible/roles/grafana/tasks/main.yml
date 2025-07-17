@@ -1,3 +1,12 @@
+- name: Check if grafana is already installed
+  stat:
+    path: /opt/grafana
+  register: grafana_installed
+
+- name: Skip role grafana if already installed
+  meta: end_play
+  when: grafana_installed.stat.exists
+
 - name: Download Grafana GPG key
   ansible.builtin.get_url:
     url: https://packages.grafana.com/gpg.key

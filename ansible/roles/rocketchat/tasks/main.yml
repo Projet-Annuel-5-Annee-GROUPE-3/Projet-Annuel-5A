@@ -1,3 +1,12 @@
+- name: Check if rocketchat is already installed
+  stat:
+    path: /opt/rocketchat
+  register: rocketchat_installed
+
+- name: Skip role rocketchat if already installed
+  meta: end_play
+  when: rocketchat_installed.stat.exists
+
 - name: Create rocketchat user
   user:
     name: rocketchat
@@ -116,7 +125,6 @@
       Environment=OVERWRITE_SETTING_Show_Setup_Wizard=completed
       Environment=OVERWRITE_SETTING_Accounts_RegistrationForm=Disabled
       Environment=OVERWRITE_SETTING_Accounts_AllowUserRegistration=false
-#      Environment=INITIAL_USER=yes
       Restart=always
 
       [Install]
@@ -129,3 +137,4 @@
     daemon_reload: yes
     enabled: yes
     state: started
+

@@ -13,6 +13,15 @@ output "public_ip_prometheus" {
 output "public_ip_rocketchat" {
   value = azurerm_public_ip.pip_rocketchat.ip_address
 }
+
 output "rocketchat_nsg_id" {
   value = azurerm_network_security_group.nsg_rocketchat.id
+
+}
+output "supervision_dns" {
+  value = "supervision.projetgrp3.ovh"
+}
+
+output "rocketchat_dns" {
+  value = "rocketchat.projetgrp3.ovh"
 }

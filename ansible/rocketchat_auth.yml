@@ -1,0 +1,8 @@
+---
+- name: Authenticate to Rocket.Chat and set up users
+  hosts: localhost
+  gather_facts: false
+  roles:
+    - rocketchat_auth
+    - rocketchat_config
+    - rocketchat_webhook

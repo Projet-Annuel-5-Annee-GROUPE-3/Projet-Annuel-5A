@@ -1,0 +1,36 @@
+---
+
+- name: Install required packages
+  apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  loop:
+    - nginx
+    - certbot
+    - python3-certbot-nginx
+
+- name: Enable Nginx
+  systemd:
+    name: nginx
+    enabled: true
+    state: started
+
+- name: Configure Nginx proxy
+  template:
+    src: nginx.conf.j2
+    dest: "/etc/nginx/sites-available/{{ domain }}"
+  notify: Reload nginx
+
+- name: Enable Nginx site
+  file:
+    src: "/etc/nginx/sites-available/{{ domain }}"
+    dest: "/etc/nginx/sites-enabled/{{ domain }}"
+    state: link
+    force: yes
+
+- name: Obtain Let's Encrypt certificate
+  command: >
+    certbot --nginx -d {{ domain }}
+    --agree-tos --email corentin.fourcaud@outlook.fr --non-interactive
+  notify: Reload nginx

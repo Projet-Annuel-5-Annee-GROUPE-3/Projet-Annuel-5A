@@ -1,0 +1,11 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: rocketchat-notifications
+
+receivers:
+  - name: rocketchat-notifications
+    webhook_configs:
+      - url: "{{ alertmanager_webhook_url }}"
+        send_resolved: true

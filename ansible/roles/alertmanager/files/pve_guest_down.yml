@@ -1,0 +1,13 @@
+groups:
+  - name: Proxmox Alerts
+    rules:
+      - alert: Proxmox Machine Down
+        expr: |
+          min by (id) (pve_up{id=~"(lxc|qemu)/.*"}) == 0
+        for: 1m
+        labels:
+          severity: critical
+          alert_id: '{{ $labels.id }}'
+        annotations:
+          summary: "Le guest {{ $labels.id }} est éteint"
+          description: "Le conteneur ou la VM {{ $labels.id }} est arrêté ou inaccessible."

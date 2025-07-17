@@ -1,0 +1,106 @@
+---
+
+- name: Get Rocket.Chat Incoming Webhooks
+  uri:
+    url: "https://{{ rocketchat_fqdn }}/api/v1/integrations.list"
+    method: GET
+    headers:
+      X-Auth-Token: "{{ rocketchat_admin_token }}"
+      X-User-Id: "{{ rocketchat_admin_user_id }}"
+  register: _webhooks_list
+  delegate_to: localhost
+  run_once: true
+
+- name: Extract Alertmanager webhook(s)
+  set_fact:
+    alertmanager_webhooks: >-
+      {{ _webhooks_list.json.integrations
+         | selectattr("name", "equalto", "Alertmanager")
+         | list }}
+  when:
+    - _webhooks_list is defined
+    - _webhooks_list.json is defined
+    - _webhooks_list.json.integrations is defined
+  delegate_to: localhost
+  run_once: true
+
+- name: Ensure alertmanager_webhooks is defined (fallback)
+  set_fact:
+    alertmanager_webhooks: []
+  when: alertmanager_webhooks is not defined
+  delegate_to: localhost
+  run_once: true
+
+- name: Create Alertmanager webhook if not present
+  uri:
+    url: "https://{{ rocketchat_fqdn }}/api/v1/integrations.create"
+    method: POST
+    headers:
+      X-Auth-Token: "{{ rocketchat_admin_token }}"
+      X-User-Id: "{{ rocketchat_admin_user_id }}"
+      Content-Type: application/json
+    body_format: json
+    body:
+      type: "webhook-incoming"
+      name: "Alertmanager"
+      enabled: true
+      username: "prometheus_bot"
+      channel: "#supervision"
+      scriptEnabled: true
+      script: "{{ lookup('file', 'files/alertmanager_incoming_script.js') | to_json | from_json }}"
+  register: _create_webhook
+  failed_when: _create_webhook.status not in [200, 400]
+  changed_when: _create_webhook.status == 200
+  when: alertmanager_webhooks | length == 0
+  delegate_to: localhost
+  run_once: true
+
+- name: Refresh Rocket.Chat webhooks list after creation
+  uri:
+    url: "https://{{ rocketchat_fqdn }}/api/v1/integrations.list"
+    method: GET
+    headers:
+      X-Auth-Token: "{{ rocketchat_admin_token }}"
+      X-User-Id: "{{ rocketchat_admin_user_id }}"
+  register: _webhooks_list
+  when: _create_webhook is changed
+  delegate_to: localhost
+  run_once: true
+
+- name: Re-extract Alertmanager webhook
+  set_fact:
+    alertmanager_webhooks: >-
+      {{ _webhooks_list.json.integrations
+         | selectattr("name", "equalto", "Alertmanager")
+         | list }}
+  when: _create_webhook is changed
+  delegate_to: localhost
+  run_once: true
+
+- name: Set webhook URL from token manually
+  set_fact:
+#    rocketchat_webhook_url: "https://{{ rocketchat_fqdn }}/hooks/{{ alertmanager_webhooks[0].token }}"
+    rocketchat_webhook_url: "https://{{ rocketchat_fqdn }}/hooks/{{ alertmanager_webhooks[0]._id }}/{{ alertmanager_webhooks[0].token }}"
+  when:
+    - alertmanager_webhooks is defined
+    - alertmanager_webhooks | length > 0
+    - alertmanager_webhooks[0].token is defined
+  delegate_to: localhost
+  run_once: true
+
+- name: Debug webhook URL before saving
+  debug:
+    var: rocketchat_webhook_url
+  when: debug | default(false)
+  delegate_to: localhost
+  run_once: true
+
+- name: Save webhook URL to file
+  copy:
+    content: |
+      ROCKETCHAT_WEBHOOK_URL={{ rocketchat_webhook_url }}
+    dest: "{{ webhook_env_file | default('./rocketchat_webhook.env') }}"
+    mode: '0600'
+  when: rocketchat_webhook_url is defined
+  delegate_to: localhost
+  run_once: true

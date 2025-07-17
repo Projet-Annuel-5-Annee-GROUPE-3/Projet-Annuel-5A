@@ -1,3 +1,41 @@
+# 1. Copier le fichier .env localement vers la machine distante
+- name: Copier rocketchat_prometheus.env sur la machine distante
+  copy:
+    src: "{{ playbook_dir }}/rocketchat_prometheus.env"
+    dest: /etc/alertmanager/rocketchat_prometheus.env
+    owner: root
+    group: root
+    mode: '0600'
+
+# 2. Lire et extraire l'URL du webhook
+- name: Lire le contenu du fichier .env sur la machine distante
+  slurp:
+    src: /etc/alertmanager/rocketchat_prometheus.env
+  register: rocketchat_env
+
+- name: Extraire l'URL du webhook depuis le contenu slurpé
+  set_fact:
+    rocketchat_webhook_url: >-
+      {{ (rocketchat_env.content | b64decode).split('\n')
+         | select('match', '^ROCKETCHAT_WEBHOOK_URL=')
+         | list | first
+         | regex_replace('^ROCKETCHAT_WEBHOOK_URL=', '')
+         | trim }}
+
+- name: Afficher l'URL webhook extraite
+  debug:
+    msg: "Webhook détecté : {{ rocketchat_webhook_url }}"
+
+# 3. Installation d'Alertmanager
+- name: Check if alertmanager is already installed
+  stat:
+    path: /opt/alertmanager
+  register: alertmanager_installed
+
+- name: Skip role alertmanager if already installed
+  meta: end_play
+  when: alertmanager_installed.stat.exists
+
 - name: Create alertmanager user
   user:
     name: alertmanager
@@ -33,26 +71,25 @@
     - /etc/alertmanager
     - /var/lib/alertmanager
 
-- name: Deploy alertmanager config
+- name: Copier les fichiers de règles Prometheus
   copy:
-    dest: /etc/alertmanager/alertmanager.yml
-    content: |
-      global:
-        resolve_timeout: 5m
-
-      route:
-        receiver: default
-        group_interval: 5m
-        repeat_interval: 1h
-
-      receivers:
-        - name: default
-          webhook_configs:
-            - url: 'http://localhost:9093/'
-    owner: alertmanager
-    group: alertmanager
+    src: "{{ item }}"
+    dest: "/etc/prometheus/rules/{{ item | basename }}"
+    owner: prometheus
+    group: prometheus
     mode: '0644'
+  with_fileglob:
+    - "{{ role_path }}/files/*.yml"
 
+# 4. Génération de la configuration avec le webhook
+- name: Générer alertmanager.yml avec le webhook Rocket.Chat
+  template:
+    src: alertmanager.yml.j2
+    dest: /etc/alertmanager/alertmanager.yml
+    mode: '0644'
+  notify: Restart Alertmanager
+
+# 5. Service systemd
 - name: Create systemd service for Alertmanager
   copy:
     dest: /etc/systemd/system/alertmanager.service
@@ -71,6 +108,7 @@
       WantedBy=multi-user.target
   notify: Reload systemd
 
+# 6. Activer et démarrer Alertmanager
 - name: Enable and start Alertmanager
   systemd:
     name: alertmanager

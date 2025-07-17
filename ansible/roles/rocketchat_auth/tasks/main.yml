@@ -1,0 +1,16 @@
+- name: Authenticate to Rocket.Chat
+  uri:
+    url: "https://{{ rocketchat_fqdn }}/api/v1/login"
+    method: POST
+    headers:
+      Content-Type: application/json
+    body_format: json
+    body:
+      user: "{{ rocketchat_admin_user }}"
+      password: "{{ rocketchat_admin_password }}"
+  register: _login_response
+
+- name: Set admin token and user ID
+  set_fact:
+    rocketchat_admin_token: "{{ _login_response.json.data.authToken }}"
+    rocketchat_admin_user_id: "{{ _login_response.json.data.userId }}"

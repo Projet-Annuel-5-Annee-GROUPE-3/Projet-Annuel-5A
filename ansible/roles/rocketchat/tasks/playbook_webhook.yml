@@ -1,0 +1,65 @@
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    rocketchat_url: "https://chat.example.com"
+    rocketchat_admin_user: "{{ rocketchat_admin_user }}"
+    rocketchat_admin_pass: "{{ rocketchat_admin_pass }}"
+  tasks:
+    - name: Login Rocket.Chat admin & get token
+      uri:
+        url: "{{ rocketchat_url }}/api/v1/login"
+        method: POST
+        body:
+          user: "{{ rocketchat_admin_user }}"
+          password: "{{ rocketchat_admin_pass }}"
+        return_content: yes
+        status_code: 200
+        body_format: json
+      register: login
+
+    - name: Create "supervision" room
+      uri:
+        url: "{{ rocketchat_url }}/api/v1/channels.create"
+        method: POST
+        headers:
+          X-Auth-Token: "{{ login.json.data.authToken }}"
+          X-User-Id: "{{ login.json.data.userId }}"
+          Content-Type: "application/json"
+        body:
+          name: "supervision"
+        body_format: json
+        status_code: [200, 400]
+      register: create_room
+
+    - name: Create incoming webhook
+      uri:
+        url: "{{ rocketchat_url }}/api/v1/integrations.create"
+        method: POST
+        headers:
+          X-Auth-Token: "{{ login.json.data.authToken }}"
+          X-User-Id: "{{ login.json.data.userId }}"
+          Content-Type: "application/json"
+        body:
+          type: "webhook-incoming"
+          integration:
+            enabled: true
+            name: "supervision-alerts"
+            channel: "#supervision"
+            alias: "Prometheus"
+            scriptEnabled: false
+        body_format: json
+        status_code: [200, 400]
+      register: webhook
+
+    - name: Display webhook URL
+      debug:
+        msg: "Webhook URL: {{ webhook.json.integration.url }}"
+
+    - name: Send test alert to supervision room
+      community.general.rocketchat:
+        domain: "{{ rocketchat_url | regex_replace('^https?://','') }}"
+        token: "{{ webhook.json.integration.token }}"
+        channel: "#supervision"
+        msg: "🚨 Test d’alerte depuis Prometheus"
+      when: webhook.json.integration.token is defined

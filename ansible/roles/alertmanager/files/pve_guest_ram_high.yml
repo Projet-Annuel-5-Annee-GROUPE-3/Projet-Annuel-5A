@@ -1,0 +1,26 @@
+groups:
+  - name: Proxmox Alerts
+    rules:
+      - alert: Proxmox High RAM Usage Warning
+        expr: |
+          pve_memory_usage_bytes{id=~"(lxc|qemu)/.*"}
+          / pve_memory_size_bytes{id=~"(lxc|qemu)/.*"} > 0.90
+        for: 1m
+        labels:
+          severity: warning
+          alert_id: '{{ $labels.id }}'
+        annotations:
+          summary: "Utilisation RAM élevée sur {{ $labels.id }}"
+          description: "Le guest {{ $labels.id }} utilise plus de 90% de sa mémoire."
+
+      - alert: Proxmox High RAM Usage Critical
+        expr: |
+          pve_memory_usage_bytes{id=~"(lxc|qemu)/.*"}
+          / pve_memory_size_bytes{id=~"(lxc|qemu)/.*"} > 0.95
+        for: 30s
+        labels:
+          severity: critical
+          alert_id: '{{ $labels.id }}'
+        annotations:
+          summary: "Utilisation RAM critique sur {{ $labels.id }}"
+          description: "Le guest {{ $labels.id }} utilise plus de 95% de sa mémoire."
